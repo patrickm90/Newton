@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1447120350 source:c:\users\patrik\desktop\cpp\ops_newtonverfahren\main.cpp
+	<iostream>
+	<cmath>
+	<stdexcept>
+	"Funktion.h"
+
+1447117710 c:\users\patrik\desktop\cpp\ops_newtonverfahren\funktion.h
+

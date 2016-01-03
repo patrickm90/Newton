@@ -1,0 +1,7 @@
+f(x) = 5*sin(x)
+y(x) = -5*sin(x)
+
+
+set terminal png
+set output "output123.png"
+plot f(x),y(x)

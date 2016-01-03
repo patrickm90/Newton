@@ -2,6 +2,7 @@
 #include <cmath>
 #include <stdexcept>
 #include "Funktion.h"
+#include "stdafx.h"
 
 using namespace std;
 

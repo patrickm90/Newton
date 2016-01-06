@@ -27,6 +27,19 @@ struct Funktion
 
 
 using namespace std;
+//Thanks to:
+//http://stackoverflow.com/a/10467633/2952814
+const std::string currentDateTime() {
+	time_t     now = time(0);
+	struct tm  tstruct;
+	char       buf[80];
+	tstruct = *localtime(&now);
+	// Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+	// for more information about date/time format
+	strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+
+	return buf;
+}
 
 //Thanks to:
 //http://stackoverflow.com/questions/3418231/replace-part-of-a-string-with-another-string
@@ -41,21 +54,62 @@ std::string ReplaceString(std::string subject, const std::string& search,
 	return subject;
 }
 
-void plot(std::string function, std::string tangente, std::string fileName)
+
+
+std::string GetExecutablePath()
+{
+	//http://stackoverflow.com/a/34109000/2952814
+	char buf[1024] = { 0 };
+	char *p;
+	p = buf;
+	
+	DWORD ret = GetModuleFileNameA(NULL, buf, sizeof(buf));
+	if (ret == 0 || ret == sizeof(buf))
+	{
+		//return executable_path_fallback(argv0);
+	}
+	std::string path = buf;
+	return ReplaceString(path, "Newtonverfahren.exe", "");
+
+}
+
+std::string GetConfigLine(int lineNumber)
+{
+	std::string configPath = GetExecutablePath().append("Config.config");
+	
+	std::ifstream input(configPath);
+	int i = 0;
+	for (std::string line; getline(input, line); )
+	{
+		if (i == lineNumber)
+			return line;
+		i++;
+	}
+	return "";
+
+}
+void saveLog(std::string logString)
+{
+	std::string path = GetConfigLine(1);
+	path.append("LogFile.txt");
+	std::ofstream fs(path);
+
+	fs << logString;
+	fs.close();
+}
+
+void plot(std::string function, std::string tangente, std::string ableitung, std::string fileName)
 {
 
+	std::string call = GetConfigLine(0);
 
-
-	std::string call = "C:\\Users\\Patrick\\Dropbox\\\"Uni Wien\"\\OPS\\Newton\\Newtonverfahren\\Debug\\gnu\\wgnuplot.exe -p -e";
-
-	std::string options = function.append(";").append(tangente)
-		.append(";").append("\"set terminal png\"").append(";").append("\"set output ").append("'").append(fileName).append("'").append("\";").append("\"set xrange [-5:5]\";").append("\"set yrange [-5:5]\";")
-		.append("\"plot ").append("f(x),y(x)\"");
+	std::string options = function.append(";").append(tangente).append(";").append(ableitung)
+		.append(";").append("\"set terminal png\"").append(";").append("\"set grid front\"").append(";").append("\"set output ").append("'").append(fileName).append("'").append("\";").append("\"set xrange [-5:5]\";").append("\"set yrange [-5:5]\";")
+		.append("\"plot ").append("f(x),y(x),g(x)\"");
 
 	call = call.append(" ").append(options);
 	const char* run = call.c_str();
-	cout << run;
-	cout << std::endl << std::endl;
+	//cout << run;
 	system(run);
 }
 
@@ -69,38 +123,71 @@ int schritte = 0;
 */
 // Verfahren fuer Eindimensionales Newtonverfahren. Bricht bei erreichen der Genauigkeit bzw. bei nicht moeglichen Ergebnissen ab. Startpunkt = x0 analog zum Verfahren.
 // Bei Erfolg: Plotten (implementieren!)
-void newton_1d(Funktion &g, double genauigkeit, double startPunkt, std::string function) {                  // PLOTTEN ?
+void newton_1d(Funktion &g, double genauigkeit, double startPunkt, std::string function, std::string ableitung) {                  // PLOTTEN ?
+	
+	std::string logString = "";
+
 	int schritte = 0;
 
 	double vorigerPunkt = startPunkt;
 	double aktuellerPunkt = startPunkt;
 	double naechsterPunkt = startPunkt;
 	
-	cout << "x" << schritte++ << "  " << naechsterPunkt << endl;
+	std::string output = "Step: ";
+	output.append(std::to_string(schritte++)).append(" ")
+		.append("x=").append(std::to_string(naechsterPunkt)).append(" ")
+		.append("y=").append(std::to_string(g.value(naechsterPunkt)));
+
+	logString.append(output).append("\n");
+
+	cout << output << endl << endl;
 
 	for (; schritte < 100; schritte++) {
-		std::string path = "C:\\Temp\\Newton\\";
+		std::string path = GetConfigLine(1);
 		path = path.append(std::to_string(schritte)).append(".png");
 
-		//plot("f(x)=2*x**2+2","y(x)=20*x-48" , path);
-		double k = g.x(aktuellerPunkt);
-		double d = g.value(aktuellerPunkt) - k*aktuellerPunkt;
+		double k = g.xx(aktuellerPunkt);
+		double d = g.x(aktuellerPunkt) - k*aktuellerPunkt;
 
 		std::string tangente = "y(x)=";
 		tangente = tangente.append(std::to_string(k)).append("*").append("x").append("+").append(std::to_string(d));
 
-		plot(function, tangente, path);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		plot(function, tangente, ableitung, path);
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		
 		naechsterPunkt = aktuellerPunkt - (g.x(aktuellerPunkt) / g.xx(aktuellerPunkt));
-		cout << "x" << schritte << "  " << naechsterPunkt << endl;
-		if (vorigerPunkt == naechsterPunkt && aktuellerPunkt != vorigerPunkt) { cout << "Startwert alterniert" << endl; break; }
+
+		std::string output = "Step: ";
+		output.append(std::to_string(schritte)).append(" ")
+			.append("x=").append(std::to_string(naechsterPunkt)).append(" ")
+			.append("y=").append(std::to_string(g.value(naechsterPunkt)));
+
+		logString.append(output).append("\n");
+
+		cout << output << endl << endl;
+		
+
+		if (vorigerPunkt == naechsterPunkt && aktuellerPunkt != vorigerPunkt) 
+		{ 
+			cout << "Startwert alterniert" << endl; break; 
+			logString.append("Startwert alterniert").append("\n");
+		}
 		if ((abs(g.x(aktuellerPunkt)) > genauigkeit)) {
 			vorigerPunkt = aktuellerPunkt;
 			aktuellerPunkt = naechsterPunkt;
 		}
 		else { break; }
 	}
+
+	logString.append("\n\n\n");
+	logString.append("---------------Log file generated for following parameters---------------").append("\n");
+	logString.append("Function: ").append(ReplaceString(function, "**", "^")).append("\n");
+	logString.append("Start Point: ").append(std::to_string(startPunkt)).append("\n");
+	logString.append("Accuracy: ").append(std::to_string(genauigkeit)).append("\n");
+	logString.append("Created at: ").append(currentDateTime()).append("\n");
+
+
+	saveLog(logString);
 }
 
 // Auswerten f. 1-dimensionale Funktion
@@ -142,8 +229,6 @@ double Funktion::operator()(double x) {
 
 int main()
 {
-	
-
 
 	int eingabe = 0;
 	// Grundlegende Funktion:  3 Funktionen implementiert, 2 1-Dimensionale, 1 Mehrdimensionale
@@ -174,7 +259,7 @@ int main()
 		cout << "Bitte Genauigkeit angeben  > ";
 		cin >> genauigkeit;
 
-		newton_1d(g, genauigkeit, startwert, "f(x)=x**5+5*x**4+5*x**3-5*x**2-6*x");
+		newton_1d(g, genauigkeit, startwert, "f(x)=x**5+5*x**4+5*x**3-5*x**2-6*x", "g(x)=5*x**4+20*x**3+15*x**2-10*x-6");
 
 	}
 	else
@@ -195,7 +280,7 @@ int main()
 			cout << "Bitte Genauigkeit angeben (< 1), Trennung \".\"  > ";
 			cin >> genauigkeit;
 
-			newton_1d(f, genauigkeit, startwert, "");
+			newton_1d(f, genauigkeit, startwert, "f(x)=(x**4)/4-x**2+2*x", "g(x)=x**3-2*x+2");
 
 		}
 		else

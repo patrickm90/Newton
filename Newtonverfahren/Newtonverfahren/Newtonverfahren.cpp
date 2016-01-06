@@ -53,12 +53,20 @@ std::string ReplaceString(std::string subject, const std::string& search,
 	}
 	return subject;
 }
-
-
-
+//Thanks to
+//http://stackoverflow.com/a/392988/2952814
+double StringToDouble(char* str)
+{
+	char* endptr;
+	double value = strtod(str, &endptr);
+	if (*endptr) return 0;
+	return value;
+}
+//Thanks to:
+//http://stackoverflow.com/a/34109000/2952814
 std::string GetExecutablePath()
 {
-	//http://stackoverflow.com/a/34109000/2952814
+
 	char buf[1024] = { 0 };
 	char *p;
 	p = buf;
@@ -100,7 +108,6 @@ void saveLog(std::string logString)
 
 void plot(std::string function, std::string tangente, std::string ableitung, std::string fileName)
 {
-
 	std::string call = GetConfigLine(0);
 
 	std::string options = function.append(";").append(tangente).append(";").append(ableitung)
@@ -186,8 +193,16 @@ void newton_1d(Funktion &g, double genauigkeit, double startPunkt, std::string f
 	logString.append("Accuracy: ").append(std::to_string(genauigkeit)).append("\n");
 	logString.append("Created at: ").append(currentDateTime()).append("\n");
 
-
 	saveLog(logString);
+
+	std::string endOutput = "";
+	endOutput.append("Found optimal solution at: ").append("x=").append(std::to_string(aktuellerPunkt))
+		.append(" ").append("where y=").append(std::to_string(g.value(aktuellerPunkt))).append("\n\n")
+		.append("Graphs and Log can be found at: ").append(GetConfigLine(1)).append("\n\n")
+		.append("Input anything to escape...");
+
+	cout << endOutput << endl;
+
 }
 
 // Auswerten f. 1-dimensionale Funktion
@@ -250,8 +265,11 @@ int main()
 			double xx(double x) { return ((20 * x*x*x) + (60 * x*x) + (30 * x) - 10); } // g''(x)
 		}g;
 
-		double genauigkeit = 1;
-		double startwert = 0;
+		char genauigkeit [1024];
+		char startwert[1024];
+
+		//std::string genauigkeit = "";
+		//std:string  = "";
 
 		cout << "Bitte Startpunkt eingeben  > ";
 		cin >> startwert;
@@ -259,7 +277,7 @@ int main()
 		cout << "Bitte Genauigkeit angeben  > ";
 		cin >> genauigkeit;
 
-		newton_1d(g, genauigkeit, startwert, "f(x)=x**5+5*x**4+5*x**3-5*x**2-6*x", "g(x)=5*x**4+20*x**3+15*x**2-10*x-6");
+		newton_1d(g, StringToDouble(genauigkeit), StringToDouble(startwert), "f(x)=x**5+5*x**4+5*x**3-5*x**2-6*x", "g(x)=5*x**4+20*x**3+15*x**2-10*x-6");
 
 	}
 	else
@@ -271,16 +289,16 @@ int main()
 				double xx(double x) { return ((3 * x*x) - 2); } // f''(x)
 			}f;
 
-			double startwert = 0;
-			double genauigkeit = 1;
-
+			char genauigkeit[1024];
+			char startwert[1024];
+			
 			cout << "Bitte Startwert eingeben  > ";
 			cin >> startwert;
 
 			cout << "Bitte Genauigkeit angeben (< 1), Trennung \".\"  > ";
 			cin >> genauigkeit;
 
-			newton_1d(f, genauigkeit, startwert, "f(x)=(x**4)/4-x**2+2*x", "g(x)=x**3-2*x+2");
+			newton_1d(f, StringToDouble(genauigkeit), StringToDouble(startwert), "f(x)=(x**4)/4-x**2+2*x", "g(x)=x**3-2*x+2");
 
 		}
 		else
@@ -309,7 +327,12 @@ int main()
 				newton_md(h,genauigkeit, startwertx, startwerty);*/
 
 			}
-			else { cout << "Fehlerhafte eingabe, Prozess terminiert"; return 1; }
+			else 
+			{ 
+				cout << "Fehlerhafte eingabe, Prozess terminiert..."; 
+				std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+				return 1; 
+			}
 			int warte = 0;
 			cin >> warte;
 			return 0;

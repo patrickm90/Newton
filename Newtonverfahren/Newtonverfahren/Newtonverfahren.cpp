@@ -252,7 +252,7 @@ int main()
 		<< "Bitte waehlen Sie welche Funktion Sie gezeigt bekommen wollen:" << endl
 		<< "Funktion 1 - Eindimensional, loesbar f. x0 = 0: x^5 + 5x^4 + 5x^3 - 5x^2 - 6x, Eingabe: 1" << endl
 		<< "Funktion 2 - Eindimensional, unloesbar f. x0 = 0: (x^4)/4 - x^2 + 2x, Eingabe: 2" << endl
-		<< "Funktion 3 - Mehrdimensional: ___________, Eingabe: 3" << endl << endl
+		//<< "Funktion 3 - Mehrdimensional: ___________, Eingabe: 3" << endl << endl
 		<< "> ";
 
 
